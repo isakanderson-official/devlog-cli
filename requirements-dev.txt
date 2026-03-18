@@ -1,0 +1,16 @@
+# Development dependencies for devlog-cli
+# Install with: pip install -r requirements-dev.txt
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.0
+pytest-timeout>=2.1.0
+
+# Code quality
+ruff>=0.3.0
+mypy>=1.8.0
+
+# Development tools
+pre-commit>=3.6.0
+build>=1.0.0

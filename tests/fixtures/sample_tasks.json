@@ -1,0 +1,38 @@
+{
+  "2024-03-15": [
+    {
+      "id": "task0001",
+      "text": "Implement authentication flow",
+      "done": false,
+      "position": 0,
+      "created_at": "2024-03-15T09:00:00",
+      "completed_at": null
+    },
+    {
+      "id": "task0002",
+      "text": "Fix database migration",
+      "done": false,
+      "position": 1,
+      "created_at": "2024-03-15T10:30:00",
+      "completed_at": null
+    },
+    {
+      "id": "task0003",
+      "text": "Update documentation",
+      "done": true,
+      "position": 0,
+      "created_at": "2024-03-14T14:00:00",
+      "completed_at": "2024-03-15T16:20:00"
+    }
+  ],
+  "2024-03-14": [
+    {
+      "id": "task0004",
+      "text": "Code review for PR #42",
+      "done": true,
+      "position": 0,
+      "created_at": "2024-03-14T11:00:00",
+      "completed_at": "2024-03-14T15:00:00"
+    }
+  ]
+}
