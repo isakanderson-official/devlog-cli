@@ -61,7 +61,7 @@ def cli_list(args):
         if todos:
             print(f"TODO ({len(todos)}):")
             for t in sorted(todos, key=lambda x: x.get("position", 0)):
-                print(f"  ○ [{t['id']}] {t['text']}")
+                print(f"  • [{t['id']}] {t['text']}")
             print()
 
         if dones:
@@ -184,7 +184,7 @@ def cli_undone(args):
         if args.json:
             print(json.dumps(task, indent=2))
         else:
-            print(f"○ Marked as pending: {task['text']}")
+            print(f"• Marked as pending: {task['text']}")
     else:
         # Search all dates
         found = False
@@ -207,7 +207,7 @@ def cli_undone(args):
                 if args.json:
                     print(json.dumps(task, indent=2))
                 else:
-                    print(f"○ Marked as pending: {task['text']}")
+                    print(f"• Marked as pending: {task['text']}")
                 found = True
                 break
 
@@ -349,7 +349,7 @@ def cli_search(args):
             print()
             for r in results:
                 task = r["task"]
-                marker = "✓" if task.get("done") else "○"
+                marker = "✓" if task.get("done") else "•"
                 print(f"  {marker} [{r['date']}] [{task['id']}] {task['text']}")
 
 

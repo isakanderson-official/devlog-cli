@@ -113,11 +113,11 @@ def draw_tasks(scr, tasks, cursor, start_y, h, w):
             if is_cur:
                 fill_line(scr, y, curses.color_pair(C_CURSOR_BG))
                 if li == 0:
-                    saddstr(scr, y, 4, "○", curses.color_pair(C_CURSOR_BG))
+                    saddstr(scr, y, 4, "•", curses.color_pair(C_CURSOR_BG))
                 saddstr(scr, y, text_col, line, curses.color_pair(C_CURSOR_BG))
             else:
                 if li == 0:
-                    saddstr(scr, y, 4, "○", curses.color_pair(C_WHITE))
+                    saddstr(scr, y, 4, "•", curses.color_pair(C_WHITE))
                 saddstr(scr, y, text_col, line, curses.color_pair(C_WHITE))
             y += 1
         y += 1
@@ -167,7 +167,7 @@ def draw_footer(scr, h, w, mode="normal"):
             ("1-9", "ws"), ("W", "ws mgmt"), ("q", "quit"),
         ]
     elif mode == "standup":
-        hints = [("q", "back")]
+        hints = [("c", "copy"), ("q", "back")]
     elif mode == "weekly":
         hints = [("q", "back")]
     elif mode == "heatmap":

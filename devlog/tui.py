@@ -162,7 +162,7 @@ def main(scr):
                                     next_cursor = tid
                                     break
                             cursor = next_cursor if next_cursor else todo_ids[-1]
-                    message = "✓ Done" if task["done"] else "○ Reopened"
+                    message = "✓ Done" if task["done"] else "• Reopened"
                     msg_color = C_GREEN
 
         # ── Edit ──

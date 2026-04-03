@@ -224,7 +224,7 @@ The main loop uses `scr.get_wch()` to handle both regular characters and special
 - After any task list modification, call `set_tasks()` which automatically calls `reposition()`
 - The cursor variable stores a task ID (string), not an index
 - Date keys are formatted as "YYYY-MM-DD" via the `date_key()` helper
-- All user-facing strings use simple ASCII characters; Unicode symbols (✓, ○, →) are only for UI chrome
+- All user-facing strings use simple ASCII characters; Unicode symbols (✓, •, →) are only for UI chrome
 
 ## CLI Mode for LLM Integration
 

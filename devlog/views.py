@@ -3,6 +3,8 @@
 import curses
 import calendar
 import shutil
+import subprocess
+import platform
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -16,16 +18,52 @@ from .ui.drawing import saddstr, fill_line, draw_footer
 from .ui.input import text_input
 
 
+# ── Clipboard utilities ──────────────────────────────────────────────────────
+
+def copy_to_clipboard(text):
+    """Copy text to system clipboard. Returns True on success, False on failure."""
+    try:
+        system = platform.system()
+        if system == "Darwin":  # macOS
+            process = subprocess.Popen(['pbcopy'], stdin=subprocess.PIPE)
+            process.communicate(text.encode('utf-8'))
+            return process.returncode == 0
+        elif system == "Linux":
+            # Try xclip first, then xsel
+            try:
+                process = subprocess.Popen(['xclip', '-selection', 'clipboard'],
+                                         stdin=subprocess.PIPE)
+                process.communicate(text.encode('utf-8'))
+                return process.returncode == 0
+            except FileNotFoundError:
+                process = subprocess.Popen(['xsel', '--clipboard', '--input'],
+                                         stdin=subprocess.PIPE)
+                process.communicate(text.encode('utf-8'))
+                return process.returncode == 0
+        elif system == "Windows":
+            process = subprocess.Popen(['clip'], stdin=subprocess.PIPE, shell=True)
+            process.communicate(text.encode('utf-8'))
+            return process.returncode == 0
+        return False
+    except Exception:
+        return False
+
+
 # ── Standup view ─────────────────────────────────────────────────────────────
 
 def show_standup(scr, ws_name):
-    """Show standup view with yesterday's completed and today's todos."""
+    """Show standup view with yesterday's completed and today's todos + done."""
     h, w = scr.getmaxyx()
     today = datetime.now()
     yesterday = today - timedelta(days=1)
 
     y_done = [t for t in get_tasks(ws_name, yesterday) if t.get("done")]
-    t_todo = [t for t in get_tasks(ws_name, today) if not t.get("done")]
+    today_tasks = get_tasks(ws_name, today)
+    t_todo = [t for t in today_tasks if not t.get("done")]
+    t_done = [t for t in today_tasks if t.get("done")]
+
+    message = ""  # For showing copy confirmation or errors
+    message_color = C_GREEN
 
     while True:
         scr.clear()
@@ -42,21 +80,67 @@ def show_standup(scr, ws_name):
                 break
             saddstr(scr, y, 5, "✓  " + t["text"], curses.color_pair(C_GREEN))
             y += 1
+
         y += 2
-        saddstr(scr, y, 3, f"Today — to do ({len(t_todo)})",
+        saddstr(scr, y, 3, f"Today — to do ({len(t_todo)}), done ({len(t_done)})",
                 curses.color_pair(C_DIM))
         y += 2
+
+        # Show todo tasks first
         for t in t_todo:
             if y >= h - 4:
                 break
-            saddstr(scr, y, 5, "○  " + t["text"], curses.color_pair(C_WHITE))
+            saddstr(scr, y, 5, "•  " + t["text"], curses.color_pair(C_WHITE))
             y += 1
+
+        # Then show done tasks
+        for t in t_done:
+            if y >= h - 4:
+                break
+            saddstr(scr, y, 5, "✓  " + t["text"], curses.color_pair(C_GREEN))
+            y += 1
+
+        # Show message if present
+        if message:
+            msg_y = h - 3
+            msg_x = max(0, (w - len(message)) // 2)
+            saddstr(scr, msg_y, msg_x, message, curses.color_pair(message_color))
 
         draw_footer(scr, h, w, "standup")
         scr.refresh()
         ch = scr.getch()
+
+        # Clear message after any keypress
+        if message:
+            message = ""
+
         if ch in (ord("q"), ord("Q"), 27):
             break
+        elif ch == ord("c"):
+            # Format standup text for Slack
+            lines = []
+            lines.append("*Yesterday*")
+            for t in y_done:
+                lines.append(f"✓ {t['text']}")
+            if not y_done:
+                lines.append("_(none)_")
+            lines.append("")
+            lines.append("*Today*")
+            for t in t_todo:
+                lines.append(f"• {t['text']}")
+            for t in t_done:
+                lines.append(f"✓ {t['text']}")
+            if not t_todo and not t_done:
+                lines.append("_(none)_")
+
+            standup_text = "\n".join(lines)
+
+            if copy_to_clipboard(standup_text):
+                message = "✓ Copied to clipboard!"
+                message_color = C_GREEN
+            else:
+                message = "✗ Failed to copy to clipboard"
+                message_color = C_RED
 
 
 # ── Weekly summary ───────────────────────────────────────────────────────────
@@ -271,7 +355,7 @@ def show_search(scr, ws_name):
             dk, tid, task = results[ri]
             done = task.get("done", False)
             is_cur = (ri == sel)
-            marker = "✓" if done else "○"
+            marker = "✓" if done else "•"
             text = task["text"]
             avail = w - 22
             if avail > 0 and len(text) > avail:
