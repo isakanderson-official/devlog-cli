@@ -3,13 +3,13 @@
 import curses
 from datetime import datetime, timedelta
 
-from .core.config import load_config, save_config, active_ws_name, DEFAULT_WORKSPACES
-from .core.persistence import get_tasks, set_tasks
-from .core.tasks import gen_id, find_task, next_position, nav_order
-from .ui.colors import init_colors, C_GREEN, C_CYAN, C_RED, C_YELLOW
-from .ui.drawing import draw_workspace_bar, draw_header, draw_tasks, draw_footer, saddstr
-from .ui.input import text_input
 from . import views
+from .core.config import DEFAULT_WORKSPACES, active_ws_name, load_config, save_config
+from .core.persistence import get_tasks, set_tasks
+from .core.tasks import find_task, gen_id, nav_order, next_position
+from .ui.colors import C_CYAN, C_GREEN, C_RED, C_YELLOW, init_colors
+from .ui.drawing import draw_footer, draw_header, draw_tasks, draw_workspace_bar, saddstr
+from .ui.input import text_input
 
 
 def main(scr):
@@ -104,7 +104,11 @@ def main(scr):
             cursor = None
 
         # ── Add task ──
-        elif key == "\n" or key == "a" or (isinstance(key, int) and key in (10, 13, curses.KEY_ENTER)):
+        elif (
+            key == "\n"
+            or key == "a"
+            or (isinstance(key, int) and key in (10, 13, curses.KEY_ENTER))
+        ):
             result = text_input(scr, h - 4, 3, "New task: ")
             if result:
                 new_task = {
@@ -131,7 +135,9 @@ def main(scr):
                     if task["done"]:
                         task["completed_at"] = datetime.now().isoformat()
                         # Move to bottom of done section
-                        done_tasks = [t for t in tasks if t.get("done") and t.get("id") != task.get("id")]
+                        done_tasks = [
+                            t for t in tasks if t.get("done") and t.get("id") != task.get("id")
+                        ]
                         if done_tasks:
                             task["position"] = max(t.get("position", 0) for t in done_tasks) + 1
                         else:
@@ -139,7 +145,9 @@ def main(scr):
                     else:
                         task["completed_at"] = None
                         # Move to bottom of todo section
-                        todo_tasks = [t for t in tasks if not t.get("done") and t.get("id") != task.get("id")]
+                        todo_tasks = [
+                            t for t in tasks if not t.get("done") and t.get("id") != task.get("id")
+                        ]
                         if todo_tasks:
                             task["position"] = max(t.get("position", 0) for t in todo_tasks) + 1
                         else:
@@ -148,10 +156,13 @@ def main(scr):
                     # When marking done, move cursor to next todo item
                     if was_todo:
                         cur_pos = order.index(cursor) if cursor in order else 0
-                        todo_ids = [t["id"] for t in sorted(
-                            [t for t in tasks if not t.get("done")],
-                            key=lambda t: t.get("position", 0)
-                        )]
+                        todo_ids = [
+                            t["id"]
+                            for t in sorted(
+                                [t for t in tasks if not t.get("done")],
+                                key=lambda t: t.get("position", 0),
+                            )
+                        ]
                         # Pick the next todo after current position, or last todo
                         if todo_ids:
                             # Find first todo that was below the toggled task
@@ -170,8 +181,7 @@ def main(scr):
             if cursor:
                 idx, task = find_task(tasks, cursor)
                 if task:
-                    result = text_input(scr, h - 4, 3, "Edit: ",
-                                        prefill=task["text"])
+                    result = text_input(scr, h - 4, 3, "Edit: ", prefill=task["text"])
                     if result:
                         task["text"] = result
                         set_tasks(ws_name, current_date, tasks)
@@ -186,9 +196,8 @@ def main(scr):
                     name = task["text"]
                     avail = w - 25
                     if len(name) > avail > 0:
-                        name = name[:avail - 1] + "…"
-                    saddstr(scr, h - 4, 3, f"Delete \"{name}\"? (y/n)",
-                            curses.color_pair(C_RED))
+                        name = name[: avail - 1] + "…"
+                    saddstr(scr, h - 4, 3, f'Delete "{name}"? (y/n)', curses.color_pair(C_RED))
                     scr.refresh()
                     confirm = scr.getch()
                     if confirm in (ord("y"), ord("Y")):
@@ -212,7 +221,10 @@ def main(scr):
                     _, cur_task = find_task(tasks, cursor)
                     _, prev_task = find_task(tasks, prev_id)
                     if cur_task and prev_task:
-                        cur_task["position"], prev_task["position"] = prev_task["position"], cur_task["position"]
+                        cur_task["position"], prev_task["position"] = (
+                            prev_task["position"],
+                            cur_task["position"],
+                        )
                         set_tasks(ws_name, current_date, tasks)
 
         # ── Reorder down (J or Shift+Down) ──
@@ -224,7 +236,10 @@ def main(scr):
                     _, cur_task = find_task(tasks, cursor)
                     _, next_task = find_task(tasks, next_id)
                     if cur_task and next_task:
-                        cur_task["position"], next_task["position"] = next_task["position"], cur_task["position"]
+                        cur_task["position"], next_task["position"] = (
+                            next_task["position"],
+                            cur_task["position"],
+                        )
                         set_tasks(ws_name, current_date, tasks)
 
         # ── Move task to previous day (Shift+Left) ──
@@ -290,4 +305,4 @@ def main(scr):
             break
 
 
-__all__ = ['main']
+__all__ = ["main"]

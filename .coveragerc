@@ -2,6 +2,7 @@
 source = devlog
 omit =
     */tests/*
+    devlog/__init__.py
     devlog/tui.py
     devlog/views.py
     devlog/ui/*

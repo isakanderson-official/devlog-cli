@@ -1,6 +1,7 @@
 """Inline text editor widget for the TUI."""
 
 import curses
+
 from .colors import C_CYAN
 from .drawing import saddstr
 
@@ -29,7 +30,7 @@ def text_input(scr, y, x, prompt, prefill=""):
             scroll = pos - vis_w + 1
         if pos < scroll:
             scroll = pos
-        visible = "".join(buf[scroll: scroll + vis_w])
+        visible = "".join(buf[scroll : scroll + vis_w])
         saddstr(scr, y, x + len(prompt), visible)
         try:
             scr.move(y, x + len(prompt) + pos - scroll)
@@ -67,4 +68,4 @@ def text_input(scr, y, x, prompt, prefill=""):
     return result if result else None
 
 
-__all__ = ['text_input']
+__all__ = ["text_input"]

@@ -38,7 +38,4 @@ def nav_order(tasks):
     return [t["id"] for t in todos + dones]
 
 
-__all__ = [
-    'gen_id', 'find_task', 'next_position',
-    'reposition', 'nav_order'
-]
+__all__ = ["gen_id", "find_task", "next_position", "reposition", "nav_order"]

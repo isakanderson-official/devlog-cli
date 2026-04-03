@@ -1,8 +1,8 @@
 """Data persistence layer - file I/O and monthly task file management."""
 
 import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
@@ -13,6 +13,7 @@ SCHEMA_VERSION = 2
 
 
 # ── Helper functions ─────────────────────────────────────────────────────────
+
 
 def _atomic_write(path, data):
     """Write JSON atomically via temp file."""
@@ -29,12 +30,13 @@ def _read_json(path):
         try:
             with open(path) as f:
                 return json.load(f)
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             pass
     return None
 
 
 # ── Monthly task files ───────────────────────────────────────────────────────
+
 
 def _month_file(ws_name, year, month) -> Path:
     return TASKS_DIR / ws_name / f"{year}-{month:02d}.json"
@@ -74,6 +76,7 @@ def get_tasks(ws_name, dt) -> list:
 
 def set_tasks(ws_name, dt, tasks):
     from .tasks import reposition
+
     year, month = _dt_year_month(dt)
     md = load_month(ws_name, year, month)
     k = date_key(dt)
@@ -98,7 +101,14 @@ def load_all_ws_tasks(ws_name) -> dict:
 
 
 __all__ = [
-    'DATA_DIR', 'TASKS_DIR', 'SCHEMA_VERSION', 'CONFIG_FILE',
-    'get_tasks', 'set_tasks', 'load_all_ws_tasks',
-    'date_key', 'load_month', 'save_month'
+    "DATA_DIR",
+    "TASKS_DIR",
+    "SCHEMA_VERSION",
+    "CONFIG_FILE",
+    "get_tasks",
+    "set_tasks",
+    "load_all_ws_tasks",
+    "date_key",
+    "load_month",
+    "save_month",
 ]

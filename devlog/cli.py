@@ -5,12 +5,12 @@ import json
 import sys
 from datetime import datetime, timedelta
 
-from .core.persistence import get_tasks, set_tasks, load_all_ws_tasks, date_key
-from .core.tasks import gen_id, find_task, next_position
-from .core.config import load_config, active_ws_name
-
+from .core.config import active_ws_name, load_config
+from .core.persistence import date_key, get_tasks, load_all_ws_tasks, set_tasks
+from .core.tasks import find_task, gen_id, next_position
 
 # ── Date parsing ─────────────────────────────────────────────────────────────
+
 
 def parse_date(date_str):
     """Parse date string. Supports: today, tomorrow, yesterday, YYYY-MM-DD."""
@@ -31,11 +31,15 @@ def parse_date(date_str):
         try:
             return datetime.strptime(date_str, "%Y-%m-%d")
         except ValueError:
-            print(f"Error: Invalid date format '{date_str}'. Use: today, tomorrow, yesterday, or YYYY-MM-DD", file=sys.stderr)
+            print(
+                f"Error: Invalid date format '{date_str}'. Use: today, tomorrow, yesterday, or YYYY-MM-DD",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
 
 # ── CLI commands ─────────────────────────────────────────────────────────────
+
 
 def cli_list(args):
     """List tasks for a given date and workspace."""
@@ -45,11 +49,7 @@ def cli_list(args):
     tasks = get_tasks(ws_name, dt)
 
     if args.json:
-        output = {
-            "date": date_key(dt),
-            "workspace": ws_name,
-            "tasks": tasks
-        }
+        output = {"date": date_key(dt), "workspace": ws_name, "tasks": tasks}
         print(json.dumps(output, indent=2))
     else:
         todos = [t for t in tasks if not t.get("done")]
@@ -135,7 +135,9 @@ def cli_done(args):
                 task["done"] = True
                 task["completed_at"] = datetime.now().isoformat()
                 # Move to bottom of done section
-                done_tasks = [t for t in day_tasks if t.get("done") and t.get("id") != task.get("id")]
+                done_tasks = [
+                    t for t in day_tasks if t.get("done") and t.get("id") != task.get("id")
+                ]
                 if done_tasks:
                     task["position"] = max(t.get("position", 0) for t in done_tasks) + 1
                 else:
@@ -195,7 +197,9 @@ def cli_undone(args):
                 task["done"] = False
                 task["completed_at"] = None
                 # Move to bottom of todo section
-                todo_tasks = [t for t in day_tasks if not t.get("done") and t.get("id") != task.get("id")]
+                todo_tasks = [
+                    t for t in day_tasks if not t.get("done") and t.get("id") != task.get("id")
+                ]
                 if todo_tasks:
                     task["position"] = max(t.get("position", 0) for t in todo_tasks) + 1
                 else:
@@ -253,7 +257,11 @@ def cli_delete(args):
                 set_tasks(ws_name, dt, day_tasks)
 
                 if args.json:
-                    print(json.dumps({"deleted": True, "task_id": args.task_id, "text": text}, indent=2))
+                    print(
+                        json.dumps(
+                            {"deleted": True, "task_id": args.task_id, "text": text}, indent=2
+                        )
+                    )
                 else:
                     print(f"✗ Deleted: {text}")
                 found = True
@@ -286,7 +294,7 @@ def cli_edit(args):
         if args.json:
             print(json.dumps(task, indent=2))
         else:
-            print(f"✓ Updated task:")
+            print("✓ Updated task:")
             print(f"  Old: {old_text}")
             print(f"  New: {task['text']}")
     else:
@@ -305,7 +313,7 @@ def cli_edit(args):
                 if args.json:
                     print(json.dumps(task, indent=2))
                 else:
-                    print(f"✓ Updated task:")
+                    print("✓ Updated task:")
                     print(f"  Old: {old_text}")
                     print(f"  New: {task['text']}")
                 found = True
@@ -328,24 +336,23 @@ def cli_search(args):
     for dk in sorted(all_tasks.keys(), reverse=True):
         for task in all_tasks[dk]:
             if query in task["text"].lower():
-                results.append({
-                    "date": dk,
-                    "task": task
-                })
+                results.append({"date": dk, "task": task})
 
     if args.json:
         output = {
             "query": args.query,
             "workspace": ws_name,
             "count": len(results),
-            "results": results
+            "results": results,
         }
         print(json.dumps(output, indent=2))
     else:
         if not results:
-            print(f"No results for \"{args.query}\"")
+            print(f'No results for "{args.query}"')
         else:
-            print(f"Found {len(results)} result{'s' if len(results) != 1 else ''} for \"{args.query}\":")
+            print(
+                f'Found {len(results)} result{"s" if len(results) != 1 else ""} for "{args.query}":'
+            )
             print()
             for r in results:
                 task = r["task"]
@@ -386,12 +393,9 @@ def cli_stats(args):
         total_tasks += len(tasks)
         total_done += done_count
 
-        daily_stats.append({
-            "date": date_key(current),
-            "total": len(tasks),
-            "done": done_count,
-            "todo": todo_count
-        })
+        daily_stats.append(
+            {"date": date_key(current), "total": len(tasks), "done": done_count, "todo": todo_count}
+        )
 
         current += timedelta(days=1)
 
@@ -404,7 +408,7 @@ def cli_stats(args):
             "total_tasks": total_tasks,
             "total_done": total_done,
             "total_pending": total_tasks - total_done,
-            "daily": daily_stats
+            "daily": daily_stats,
         }
         print(json.dumps(output, indent=2))
     else:
@@ -483,7 +487,7 @@ def cli_import(args):
         content = sys.stdin.read()
     else:
         try:
-            with open(args.file, "r") as f:
+            with open(args.file) as f:
                 content = f.read()
         except FileNotFoundError:
             print(f"Error: File {args.file} not found", file=sys.stderr)
@@ -527,7 +531,11 @@ def cli_import(args):
         set_tasks(ws_name, dt, tasks)
 
         if args.json:
-            print(json.dumps({"imported": added, "date": date_key(dt), "workspace": ws_name}, indent=2))
+            print(
+                json.dumps(
+                    {"imported": added, "date": date_key(dt), "workspace": ws_name}, indent=2
+                )
+            )
         else:
             print(f"✓ Imported {added} task{'s' if added != 1 else ''} to {date_key(dt)}")
     else:
@@ -536,11 +544,12 @@ def cli_import(args):
 
 # ── Argument parser ──────────────────────────────────────────────────────────
 
+
 def create_parser():
     """Create and configure the argument parser."""
     parser = argparse.ArgumentParser(
         description="A minimal, beautiful terminal todo app",
-        epilog="Run without arguments to launch the interactive TUI."
+        epilog="Run without arguments to launch the interactive TUI.",
     )
 
     # Global options
@@ -551,33 +560,45 @@ def create_parser():
 
     # list command
     list_parser = subparsers.add_parser("list", help="List tasks")
-    list_parser.add_argument("-d", "--date", default="today", help="Date (today, tomorrow, yesterday, or YYYY-MM-DD)")
+    list_parser.add_argument(
+        "-d", "--date", default="today", help="Date (today, tomorrow, yesterday, or YYYY-MM-DD)"
+    )
 
     # add command
     add_parser = subparsers.add_parser("add", help="Add a new task")
     add_parser.add_argument("text", help="Task text")
-    add_parser.add_argument("-d", "--date", default="today", help="Date (today, tomorrow, yesterday, or YYYY-MM-DD)")
+    add_parser.add_argument(
+        "-d", "--date", default="today", help="Date (today, tomorrow, yesterday, or YYYY-MM-DD)"
+    )
 
     # done command
     done_parser = subparsers.add_parser("done", help="Mark task as done")
     done_parser.add_argument("task_id", help="Task ID")
-    done_parser.add_argument("-d", "--date", help="Date (optional, will search all dates if not provided)")
+    done_parser.add_argument(
+        "-d", "--date", help="Date (optional, will search all dates if not provided)"
+    )
 
     # undone command
     undone_parser = subparsers.add_parser("undone", help="Mark task as not done")
     undone_parser.add_argument("task_id", help="Task ID")
-    undone_parser.add_argument("-d", "--date", help="Date (optional, will search all dates if not provided)")
+    undone_parser.add_argument(
+        "-d", "--date", help="Date (optional, will search all dates if not provided)"
+    )
 
     # delete command
     delete_parser = subparsers.add_parser("delete", help="Delete a task")
     delete_parser.add_argument("task_id", help="Task ID")
-    delete_parser.add_argument("-d", "--date", help="Date (optional, will search all dates if not provided)")
+    delete_parser.add_argument(
+        "-d", "--date", help="Date (optional, will search all dates if not provided)"
+    )
 
     # edit command
     edit_parser = subparsers.add_parser("edit", help="Edit task text")
     edit_parser.add_argument("task_id", help="Task ID")
     edit_parser.add_argument("text", help="New task text")
-    edit_parser.add_argument("-d", "--date", help="Date (optional, will search all dates if not provided)")
+    edit_parser.add_argument(
+        "-d", "--date", help="Date (optional, will search all dates if not provided)"
+    )
 
     # search command
     search_parser = subparsers.add_parser("search", help="Search tasks")
@@ -585,7 +606,9 @@ def create_parser():
 
     # stats command
     stats_parser = subparsers.add_parser("stats", help="Show statistics")
-    stats_parser.add_argument("-r", "--range", default="today", choices=["today", "week", "month"], help="Date range")
+    stats_parser.add_argument(
+        "-r", "--range", default="today", choices=["today", "week", "month"], help="Date range"
+    )
 
     # export command
     export_parser = subparsers.add_parser("export", help="Export tasks to markdown")
@@ -628,7 +651,17 @@ def execute_cli_command(args):
 
 
 __all__ = [
-    'parse_date', 'create_parser', 'execute_cli_command',
-    'cli_list', 'cli_add', 'cli_done', 'cli_undone', 'cli_delete',
-    'cli_edit', 'cli_search', 'cli_stats', 'cli_export', 'cli_import'
+    "parse_date",
+    "create_parser",
+    "execute_cli_command",
+    "cli_list",
+    "cli_add",
+    "cli_done",
+    "cli_undone",
+    "cli_delete",
+    "cli_edit",
+    "cli_search",
+    "cli_stats",
+    "cli_export",
+    "cli_import",
 ]

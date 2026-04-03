@@ -1,6 +1,6 @@
 """Configuration management."""
 
-from .persistence import CONFIG_FILE, SCHEMA_VERSION, _read_json, _atomic_write
+from .persistence import CONFIG_FILE, SCHEMA_VERSION, _atomic_write, _read_json
 
 DEFAULT_WORKSPACES = ["Personal"]
 
@@ -32,7 +32,4 @@ def active_ws_name(config) -> str:
     return wsl[0] if wsl else "Personal"
 
 
-__all__ = [
-    'DEFAULT_WORKSPACES', 'load_config',
-    'save_config', 'active_ws_name'
-]
+__all__ = ["DEFAULT_WORKSPACES", "load_config", "save_config", "active_ws_name"]
