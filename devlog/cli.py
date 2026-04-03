@@ -382,7 +382,7 @@ def cli_stats(args):
     # Collect stats
     total_tasks = 0
     total_done = 0
-    daily_stats = []
+    daily_stats = []  # type: list[dict[str, object]]
 
     current = start_date
     while current <= end_date:
@@ -425,9 +425,12 @@ def cli_stats(args):
         if len(daily_stats) > 1:
             print("Daily breakdown:")
             for stat in daily_stats:
-                if stat["total"] > 0:
-                    bar = "█" * stat["done"] + "░" * stat["todo"]
-                    print(f"  {stat['date']}: {bar} ({stat['done']}/{stat['total']})")
+                s_total = int(str(stat["total"]))
+                s_done = int(str(stat["done"]))
+                s_todo = int(str(stat["todo"]))
+                if s_total > 0:
+                    bar = "█" * s_done + "░" * s_todo
+                    print(f"  {stat['date']}: {bar} ({s_done}/{s_total})")
 
 
 def cli_export(args):

@@ -9,7 +9,7 @@ def load_config() -> dict:
     """Load configuration from disk."""
     d = _read_json(CONFIG_FILE)
     if d and d.get("schema_version") == SCHEMA_VERSION:
-        return d
+        return dict(d)
     # Return default config
     return {
         "schema_version": SCHEMA_VERSION,
@@ -25,11 +25,11 @@ def save_config(config: dict):
 
 def active_ws_name(config) -> str:
     """Get the active workspace name from config."""
-    name = config.get("active_workspace", "Personal")
+    name = str(config.get("active_workspace", "Personal"))
     wsl = config.get("workspaces", DEFAULT_WORKSPACES)
     if name in wsl:
         return name
-    return wsl[0] if wsl else "Personal"
+    return str(wsl[0]) if wsl else "Personal"
 
 
 __all__ = ["DEFAULT_WORKSPACES", "load_config", "save_config", "active_ws_name"]

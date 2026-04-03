@@ -39,7 +39,7 @@ def _read_json(path):
 
 
 def _month_file(ws_name, year, month) -> Path:
-    return TASKS_DIR / ws_name / f"{year}-{month:02d}.json"
+    return Path(TASKS_DIR / ws_name / f"{year}-{month:02d}.json")
 
 
 def load_month(ws_name, year, month) -> dict:
@@ -57,9 +57,7 @@ def save_month(ws_name, year, month, month_data: dict):
 
 
 def date_key(dt) -> str:
-    if isinstance(dt, datetime):
-        return dt.strftime("%Y-%m-%d")
-    return dt.strftime("%Y-%m-%d")
+    return str(dt.strftime("%Y-%m-%d"))
 
 
 def _dt_year_month(dt):
@@ -71,7 +69,7 @@ def _dt_year_month(dt):
 def get_tasks(ws_name, dt) -> list:
     year, month = _dt_year_month(dt)
     md = load_month(ws_name, year, month)
-    return md.get(date_key(dt), [])
+    return list(md.get(date_key(dt), []))
 
 
 def set_tasks(ws_name, dt, tasks):

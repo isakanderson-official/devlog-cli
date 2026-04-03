@@ -18,7 +18,7 @@ def find_task(tasks, task_id):
 def next_position(tasks) -> int:
     if not tasks:
         return 0
-    return max(t.get("position", 0) for t in tasks) + 1
+    return int(max(t.get("position", 0) for t in tasks)) + 1
 
 
 def reposition(tasks):
