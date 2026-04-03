@@ -126,6 +126,7 @@ def main(scr):
             if cursor:
                 idx, task = find_task(tasks, cursor)
                 if task:
+                    was_todo = not task["done"]
                     task["done"] = not task["done"]
                     if task["done"]:
                         task["completed_at"] = datetime.now().isoformat()
@@ -144,6 +145,23 @@ def main(scr):
                         else:
                             task["position"] = 0
                     set_tasks(ws_name, current_date, tasks)
+                    # When marking done, move cursor to next todo item
+                    if was_todo:
+                        cur_pos = order.index(cursor) if cursor in order else 0
+                        todo_ids = [t["id"] for t in sorted(
+                            [t for t in tasks if not t.get("done")],
+                            key=lambda t: t.get("position", 0)
+                        )]
+                        # Pick the next todo after current position, or last todo
+                        if todo_ids:
+                            # Find first todo that was below the toggled task
+                            next_cursor = None
+                            for tid in todo_ids:
+                                old_pos = order.index(tid) if tid in order else -1
+                                if old_pos >= cur_pos:
+                                    next_cursor = tid
+                                    break
+                            cursor = next_cursor if next_cursor else todo_ids[-1]
                     message = "✓ Done" if task["done"] else "○ Reopened"
                     msg_color = C_GREEN
 
