@@ -14,10 +14,11 @@ def temp_devlog_home(tmp_path, monkeypatch):
     config_file = data_dir / "config.json"
     tasks_dir = data_dir / "tasks"
 
-    # Patch the module-level constants in persistence
+    # Patch the module-level constants in persistence and config
     monkeypatch.setattr("devlog.core.persistence.DATA_DIR", data_dir)
     monkeypatch.setattr("devlog.core.persistence.CONFIG_FILE", config_file)
     monkeypatch.setattr("devlog.core.persistence.TASKS_DIR", tasks_dir)
+    monkeypatch.setattr("devlog.core.config.CONFIG_FILE", config_file)
 
     return {
         "data_dir": data_dir,
