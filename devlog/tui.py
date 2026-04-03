@@ -144,7 +144,7 @@ def main(scr):
                         else:
                             task["position"] = 0
                     set_tasks(ws_name, current_date, tasks)
-                    message = "✓ Done" if task["done"] else "○ Reopened"
+                    message = "✓ Done" if task["done"] else "• Reopened"
                     msg_color = C_GREEN
 
         # ── Edit ──
