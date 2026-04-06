@@ -3,14 +3,23 @@
 import curses
 import textwrap
 from datetime import datetime, timedelta
-from .colors import (
-    C_GREEN, C_GREY, C_WHITE, C_DIM, C_CURSOR_BG,
-    C_CYAN, C_CURSOR_GREEN, C_YELLOW, C_WS_ACTIVE, C_WS_DIM
-)
-from ..core.config import DEFAULT_WORKSPACES
 
+from ..core.config import DEFAULT_WORKSPACES
+from .colors import (
+    C_CURSOR_BG,
+    C_CURSOR_GREEN,
+    C_CYAN,
+    C_DIM,
+    C_GREEN,
+    C_GREY,
+    C_WHITE,
+    C_WS_ACTIVE,
+    C_WS_DIM,
+    C_YELLOW,
+)
 
 # ── Safe drawing helpers ─────────────────────────────────────────────────────
+
 
 def saddstr(scr, y, x, text, attr=0):
     """Safely add a string to the screen, handling boundary conditions."""
@@ -37,12 +46,12 @@ def wrap_text(text, width):
     """Wrap text to fit within a given width."""
     if width < 4:
         return [text]
-    lines = textwrap.wrap(text, width=width, break_long_words=True,
-                          break_on_hyphens=True)
+    lines = textwrap.wrap(text, width=width, break_long_words=True, break_on_hyphens=True)
     return lines if lines else [""]
 
 
 # ── Rendering functions ──────────────────────────────────────────────────────
+
 
 def draw_workspace_bar(scr, config, w):
     """Draw workspace tabs at the very top (row 0)."""
@@ -103,7 +112,7 @@ def draw_tasks(scr, tasks, cursor, start_y, h, w):
     for task in todos:
         if y >= max_y:
             break
-        is_cur = (task.get("id") == cursor)
+        is_cur = task.get("id") == cursor
         text = task["text"]
         lines = wrap_text(text, wrap_w)
 
@@ -132,7 +141,7 @@ def draw_tasks(scr, tasks, cursor, start_y, h, w):
     for task in dones:
         if y >= max_y:
             break
-        is_cur = (task.get("id") == cursor)
+        is_cur = task.get("id") == cursor
         text = task["text"]
         lines = wrap_text(text, wrap_w)
 
@@ -160,11 +169,18 @@ def draw_footer(scr, h, w, mode="normal"):
 
     if mode == "normal":
         hints = [
-            ("Enter", "new"), ("Space", "done"), ("e", "edit"),
-            ("d", "del"), ("J/K/S-↑↓", "reorder"),
-            ("←→", "day"), ("S-←→", "move task"),
-            ("/", "search"), ("m", "heatmap"),
-            ("1-9", "ws"), ("W", "ws mgmt"), ("q", "quit"),
+            ("Enter", "new"),
+            ("Space", "done"),
+            ("e", "edit"),
+            ("d", "del"),
+            ("J/K/S-↑↓", "reorder"),
+            ("←→", "day"),
+            ("S-←→", "move task"),
+            ("/", "search"),
+            ("m", "heatmap"),
+            ("1-9", "ws"),
+            ("W", "ws mgmt"),
+            ("q", "quit"),
         ]
     elif mode == "standup":
         hints = [("c", "copy"), ("q", "back")]
@@ -175,7 +191,14 @@ def draw_footer(scr, h, w, mode="normal"):
     elif mode == "search":
         hints = [("j/k", "nav"), ("Enter", "go"), ("q", "back")]
     elif mode == "ws_manage":
-        hints = [("j/k", "nav"), ("Enter", "switch"), ("a", "add"), ("r", "rename"), ("d", "delete"), ("Esc", "back")]
+        hints = [
+            ("j/k", "nav"),
+            ("Enter", "switch"),
+            ("a", "add"),
+            ("r", "rename"),
+            ("d", "delete"),
+            ("Esc", "back"),
+        ]
     else:
         hints = [("Esc", "cancel")]
 
@@ -190,6 +213,11 @@ def draw_footer(scr, h, w, mode="normal"):
 
 
 __all__ = [
-    'saddstr', 'fill_line', 'wrap_text',
-    'draw_workspace_bar', 'draw_header', 'draw_tasks', 'draw_footer'
+    "saddstr",
+    "fill_line",
+    "wrap_text",
+    "draw_workspace_bar",
+    "draw_header",
+    "draw_tasks",
+    "draw_footer",
 ]

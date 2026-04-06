@@ -48,9 +48,23 @@ def init_colors():
 
 
 __all__ = [
-    'C_GREEN', 'C_GREY', 'C_WHITE', 'C_DIM', 'C_CURSOR_BG',
-    'C_CYAN', 'C_HINT', 'C_CURSOR_GREEN', 'C_YELLOW', 'C_RED',
-    'C_HEAT_1', 'C_HEAT_2', 'C_HEAT_3', 'C_HEAT_4',
-    'C_MAGENTA', 'C_WS_ACTIVE', 'C_WS_DIM', 'C_SEARCH_HL',
-    'init_colors'
+    "C_GREEN",
+    "C_GREY",
+    "C_WHITE",
+    "C_DIM",
+    "C_CURSOR_BG",
+    "C_CYAN",
+    "C_HINT",
+    "C_CURSOR_GREEN",
+    "C_YELLOW",
+    "C_RED",
+    "C_HEAT_1",
+    "C_HEAT_2",
+    "C_HEAT_3",
+    "C_HEAT_4",
+    "C_MAGENTA",
+    "C_WS_ACTIVE",
+    "C_WS_DIM",
+    "C_SEARCH_HL",
+    "init_colors",
 ]

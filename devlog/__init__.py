@@ -2,18 +2,18 @@
 
 __version__ = "2.0.0"
 
-from .tui import main as run_tui
-from .cli import execute_cli_command, create_parser
+from .cli import create_parser, execute_cli_command
 from .core.config import load_config
+from .tui import main as run_tui
 
-__all__ = ['run', 'run_tui', 'load_config']
+__all__ = ["run", "run_tui", "load_config"]
 
 
 def run():
     """Main entry point - handles both CLI and TUI modes."""
-    import sys
-    import os
     import curses
+    import os
+    import sys
 
     parser = create_parser()
     args = parser.parse_args()

@@ -289,6 +289,13 @@ class TestWorkspaceNaming:
 
     def test_case_sensitive_workspace_names(self, temp_devlog_home):
         """Workspace names should be case-sensitive."""
+        # Detect case-insensitive filesystem (e.g. default macOS)
+        probe_dir = temp_devlog_home["tasks_dir"]
+        probe_dir.mkdir(parents=True, exist_ok=True)
+        (probe_dir / "CaseProbe").mkdir()
+        if (probe_dir / "caseprobe").exists():
+            pytest.skip("Filesystem is case-insensitive")
+
         set_tasks("Work", date(2024, 3, 15), [
             {"id": "upper", "text": "Upper", "done": False, "position": 0}
         ])

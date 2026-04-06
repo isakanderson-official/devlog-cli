@@ -1,48 +1,59 @@
 """Modal views: standup, weekly summary, heatmap, search, workspace management."""
 
-import curses
 import calendar
+import curses
+import platform
 import shutil
 import subprocess
-import platform
 from datetime import datetime, timedelta
-from pathlib import Path
 
-from .core.persistence import get_tasks, set_tasks, load_all_ws_tasks, load_month, TASKS_DIR
-from .core.config import save_config, DEFAULT_WORKSPACES
+from .core.config import DEFAULT_WORKSPACES, save_config
+from .core.persistence import TASKS_DIR, get_tasks, load_all_ws_tasks, load_month
 from .ui.colors import (
-    C_GREEN, C_GREY, C_WHITE, C_DIM, C_CURSOR_BG,
-    C_CYAN, C_CURSOR_GREEN, C_RED, C_HEAT_1, C_HEAT_2, C_HEAT_3, C_HEAT_4
+    C_CURSOR_BG,
+    C_CURSOR_GREEN,
+    C_CYAN,
+    C_DIM,
+    C_GREEN,
+    C_GREY,
+    C_HEAT_1,
+    C_HEAT_2,
+    C_HEAT_3,
+    C_HEAT_4,
+    C_RED,
+    C_WHITE,
 )
-from .ui.drawing import saddstr, fill_line, draw_footer
+from .ui.drawing import draw_footer, fill_line, saddstr
 from .ui.input import text_input
 
-
 # ── Clipboard utilities ──────────────────────────────────────────────────────
+
 
 def copy_to_clipboard(text):
     """Copy text to system clipboard. Returns True on success, False on failure."""
     try:
         system = platform.system()
         if system == "Darwin":  # macOS
-            process = subprocess.Popen(['pbcopy'], stdin=subprocess.PIPE)
-            process.communicate(text.encode('utf-8'))
+            process = subprocess.Popen(["pbcopy"], stdin=subprocess.PIPE)
+            process.communicate(text.encode("utf-8"))
             return process.returncode == 0
         elif system == "Linux":
             # Try xclip first, then xsel
             try:
-                process = subprocess.Popen(['xclip', '-selection', 'clipboard'],
-                                         stdin=subprocess.PIPE)
-                process.communicate(text.encode('utf-8'))
+                process = subprocess.Popen(
+                    ["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE
+                )
+                process.communicate(text.encode("utf-8"))
                 return process.returncode == 0
             except FileNotFoundError:
-                process = subprocess.Popen(['xsel', '--clipboard', '--input'],
-                                         stdin=subprocess.PIPE)
-                process.communicate(text.encode('utf-8'))
+                process = subprocess.Popen(
+                    ["xsel", "--clipboard", "--input"], stdin=subprocess.PIPE
+                )
+                process.communicate(text.encode("utf-8"))
                 return process.returncode == 0
         elif system == "Windows":
-            process = subprocess.Popen(['clip'], stdin=subprocess.PIPE, shell=True)
-            process.communicate(text.encode('utf-8'))
+            process = subprocess.Popen(["clip"], stdin=subprocess.PIPE, shell=True)
+            process.communicate(text.encode("utf-8"))
             return process.returncode == 0
         return False
     except Exception:
@@ -50,6 +61,7 @@ def copy_to_clipboard(text):
 
 
 # ── Standup view ─────────────────────────────────────────────────────────────
+
 
 def show_standup(scr, ws_name):
     """Show standup view with yesterday's completed and today's todos + done."""
@@ -67,13 +79,11 @@ def show_standup(scr, ws_name):
 
     while True:
         scr.clear()
-        saddstr(scr, 1, max(0, (w - 7) // 2), "Standup",
-                curses.color_pair(C_CYAN) | curses.A_BOLD)
+        saddstr(scr, 1, max(0, (w - 7) // 2), "Standup", curses.color_pair(C_CYAN) | curses.A_BOLD)
         saddstr(scr, 3, 0, "─" * (w - 1), curses.color_pair(C_DIM))
 
         y = 5
-        saddstr(scr, y, 3, f"Yesterday — completed ({len(y_done)})",
-                curses.color_pair(C_DIM))
+        saddstr(scr, y, 3, f"Yesterday — completed ({len(y_done)})", curses.color_pair(C_DIM))
         y += 2
         for t in y_done:
             if y >= h - 4:
@@ -82,8 +92,13 @@ def show_standup(scr, ws_name):
             y += 1
 
         y += 2
-        saddstr(scr, y, 3, f"Today — to do ({len(t_todo)}), done ({len(t_done)})",
-                curses.color_pair(C_DIM))
+        saddstr(
+            scr,
+            y,
+            3,
+            f"Today — to do ({len(t_todo)}), done ({len(t_done)})",
+            curses.color_pair(C_DIM),
+        )
         y += 2
 
         # Show todo tasks first
@@ -145,6 +160,7 @@ def show_standup(scr, ws_name):
 
 # ── Weekly summary ───────────────────────────────────────────────────────────
 
+
 def show_weekly(scr, ws_name):
     """Show weekly summary with task counts for the last 7 days."""
     h, w = scr.getmaxyx()
@@ -152,8 +168,13 @@ def show_weekly(scr, ws_name):
 
     while True:
         scr.clear()
-        saddstr(scr, 1, max(0, (w - 14) // 2), "Weekly Summary",
-                curses.color_pair(C_CYAN) | curses.A_BOLD)
+        saddstr(
+            scr,
+            1,
+            max(0, (w - 14) // 2),
+            "Weekly Summary",
+            curses.color_pair(C_CYAN) | curses.A_BOLD,
+        )
         saddstr(scr, 3, 0, "─" * (w - 1), curses.color_pair(C_DIM))
 
         y = 5
@@ -172,8 +193,13 @@ def show_weekly(scr, ws_name):
             summary = f"  {done_c} done, {todo_c} todo" if tasks else "  —"
 
             saddstr(scr, y, 3, day_label, curses.color_pair(C_CYAN))
-            saddstr(scr, y + 1, 5, bar + summary,
-                    curses.color_pair(C_GREEN) if tasks else curses.color_pair(C_DIM))
+            saddstr(
+                scr,
+                y + 1,
+                5,
+                bar + summary,
+                curses.color_pair(C_GREEN) if tasks else curses.color_pair(C_DIM),
+            )
             y += 3
 
         draw_footer(scr, h, w, "weekly")
@@ -184,6 +210,7 @@ def show_weekly(scr, ws_name):
 
 
 # ── Monthly heatmap ──────────────────────────────────────────────────────────
+
 
 def heat_color(count):
     """Return color pair for heatmap based on task count."""
@@ -211,8 +238,9 @@ def show_heatmap(scr, ws_name):
 
         month_name = calendar.month_name[view_month]
         title = f"{month_name} {view_year}"
-        saddstr(scr, 1, max(0, (w - len(title)) // 2), title,
-                curses.color_pair(C_CYAN) | curses.A_BOLD)
+        saddstr(
+            scr, 1, max(0, (w - len(title)) // 2), title, curses.color_pair(C_CYAN) | curses.A_BOLD
+        )
         saddstr(scr, 1, 2, "←", curses.color_pair(C_DIM))
         saddstr(scr, 1, w - 3, "→", curses.color_pair(C_DIM))
         saddstr(scr, 3, 0, "─" * (w - 1), curses.color_pair(C_DIM))
@@ -242,9 +270,11 @@ def show_heatmap(scr, ws_name):
                     total_done += done_count
                     total_tasks += total_count
 
-                    is_today = (view_year == today.year and
-                                view_month == today.month and
-                                day_num == today.day)
+                    is_today = (
+                        view_year == today.year
+                        and view_month == today.month
+                        and day_num == today.day
+                    )
 
                     cell = f"{day_num:>2}"
                     if done_count > 0:
@@ -280,8 +310,7 @@ def show_heatmap(scr, ws_name):
         y += 2
         if y < h - 3:
             stat = f"{total_done} completed / {total_tasks} total tasks this month"
-            saddstr(scr, y, max(0, (w - len(stat)) // 2), stat,
-                    curses.color_pair(C_GREEN))
+            saddstr(scr, y, max(0, (w - len(stat)) // 2), stat, curses.color_pair(C_GREEN))
 
         draw_footer(scr, h, w, "heatmap")
         scr.refresh()
@@ -306,6 +335,7 @@ def show_heatmap(scr, ws_name):
 
 # ── Search ───────────────────────────────────────────────────────────────────
 
+
 def show_search(scr, ws_name):
     """
     Search all tasks across all dates in the current workspace.
@@ -328,8 +358,13 @@ def show_search(scr, ws_name):
 
     if not results:
         scr.clear()
-        saddstr(scr, h // 2, max(0, (w - 20) // 2),
-                f"No results for \"{query}\"", curses.color_pair(C_DIM))
+        saddstr(
+            scr,
+            h // 2,
+            max(0, (w - 20) // 2),
+            f'No results for "{query}"',
+            curses.color_pair(C_DIM),
+        )
         scr.refresh()
         scr.getch()
         return None
@@ -340,9 +375,10 @@ def show_search(scr, ws_name):
 
     while True:
         scr.clear()
-        title = f"Search: \"{query}\" — {len(results)} result{'s' if len(results) != 1 else ''}"
-        saddstr(scr, 1, max(0, (w - len(title)) // 2), title,
-                curses.color_pair(C_CYAN) | curses.A_BOLD)
+        title = f'Search: "{query}" — {len(results)} result{"s" if len(results) != 1 else ""}'
+        saddstr(
+            scr, 1, max(0, (w - len(title)) // 2), title, curses.color_pair(C_CYAN) | curses.A_BOLD
+        )
         saddstr(scr, 3, 0, "─" * (w - 1), curses.color_pair(C_DIM))
 
         y = 5
@@ -354,25 +390,24 @@ def show_search(scr, ws_name):
                 break
             dk, tid, task = results[ri]
             done = task.get("done", False)
-            is_cur = (ri == sel)
+            is_cur = ri == sel
             marker = "✓" if done else "•"
             text = task["text"]
             avail = w - 22
             if avail > 0 and len(text) > avail:
-                text = text[:avail - 1] + "…"
+                text = text[: avail - 1] + "…"
 
             if is_cur:
                 fill_line(scr, y, curses.color_pair(C_CURSOR_BG))
                 saddstr(scr, y, 2, dk, curses.color_pair(C_CURSOR_BG))
-                saddstr(scr, y, 14, marker,
-                        curses.color_pair(C_CURSOR_GREEN if done else C_CURSOR_BG))
+                saddstr(
+                    scr, y, 14, marker, curses.color_pair(C_CURSOR_GREEN if done else C_CURSOR_BG)
+                )
                 saddstr(scr, y, 17, text, curses.color_pair(C_CURSOR_BG))
             else:
                 saddstr(scr, y, 2, dk, curses.color_pair(C_DIM))
-                saddstr(scr, y, 14, marker,
-                        curses.color_pair(C_GREEN if done else C_WHITE))
-                saddstr(scr, y, 17, text,
-                        curses.color_pair(C_GREY if done else C_WHITE))
+                saddstr(scr, y, 14, marker, curses.color_pair(C_GREEN if done else C_WHITE))
+                saddstr(scr, y, 17, text, curses.color_pair(C_GREY if done else C_WHITE))
             y += 1
 
         if scroll + max_visible < len(results):
@@ -401,6 +436,7 @@ def show_search(scr, ws_name):
 
 # ── Workspace management ─────────────────────────────────────────────────────
 
+
 def show_workspace_manage(scr, config):
     """Workspace management modal. Returns updated config."""
     h, w = scr.getmaxyx()
@@ -413,8 +449,9 @@ def show_workspace_manage(scr, config):
     while True:
         scr.clear()
         title = "Workspace Management"
-        saddstr(scr, 1, max(0, (w - len(title)) // 2), title,
-                curses.color_pair(C_CYAN) | curses.A_BOLD)
+        saddstr(
+            scr, 1, max(0, (w - len(title)) // 2), title, curses.color_pair(C_CYAN) | curses.A_BOLD
+        )
         saddstr(scr, 3, 0, "─" * (w - 1), curses.color_pair(C_DIM))
 
         y = 5
@@ -432,8 +469,8 @@ def show_workspace_manage(scr, config):
         for i, name in enumerate(wsl):
             if y >= h - 5:
                 break
-            is_cursor = (i == cursor_idx)
-            is_active = (name == active)
+            is_cursor = i == cursor_idx
+            is_active = name == active
 
             if is_cursor:
                 fill_line(scr, y, curses.color_pair(C_CURSOR_BG))
@@ -443,8 +480,13 @@ def show_workspace_manage(scr, config):
             else:
                 marker = "→" if is_active else " "
                 saddstr(scr, y, 4, marker, curses.color_pair(C_CYAN))
-                saddstr(scr, y, 6, f"{i + 1}: {name}",
-                        curses.color_pair(C_WHITE if is_active else C_DIM))
+                saddstr(
+                    scr,
+                    y,
+                    6,
+                    f"{i + 1}: {name}",
+                    curses.color_pair(C_WHITE if is_active else C_DIM),
+                )
             y += 1
 
         draw_footer(scr, h, w, "ws_manage")
@@ -475,8 +517,7 @@ def show_workspace_manage(scr, config):
             name = text_input(scr, h - 4, 3, "New workspace: ")
             if name:
                 if name in wsl:
-                    saddstr(scr, h - 4, 3, f"\"{name}\" already exists",
-                            curses.color_pair(C_RED))
+                    saddstr(scr, h - 4, 3, f'"{name}" already exists', curses.color_pair(C_RED))
                     scr.refresh()
                     scr.getch()
                 else:
@@ -493,8 +534,9 @@ def show_workspace_manage(scr, config):
                 new_name = text_input(scr, h - 4, 3, "Rename to: ", prefill=selected_ws)
                 if new_name and new_name != selected_ws:
                     if new_name in wsl:
-                        saddstr(scr, h - 4, 3, f"\"{new_name}\" already exists",
-                                curses.color_pair(C_RED))
+                        saddstr(
+                            scr, h - 4, 3, f'"{new_name}" already exists', curses.color_pair(C_RED)
+                        )
                         scr.refresh()
                         scr.getch()
                     else:
@@ -513,14 +555,18 @@ def show_workspace_manage(scr, config):
 
         elif ch == ord("d"):
             if len(wsl) <= 1:
-                saddstr(scr, h - 4, 3, "Cannot delete the last workspace",
-                        curses.color_pair(C_RED))
+                saddstr(scr, h - 4, 3, "Cannot delete the last workspace", curses.color_pair(C_RED))
                 scr.refresh()
                 scr.getch()
             elif 0 <= cursor_idx < len(wsl):
                 selected_ws = wsl[cursor_idx]
-                saddstr(scr, h - 4, 3, f"Delete \"{selected_ws}\" and all its tasks? (y/n)",
-                        curses.color_pair(C_RED))
+                saddstr(
+                    scr,
+                    h - 4,
+                    3,
+                    f'Delete "{selected_ws}" and all its tasks? (y/n)',
+                    curses.color_pair(C_RED),
+                )
                 scr.refresh()
                 confirm = scr.getch()
                 if confirm in (ord("y"), ord("Y")):
@@ -543,7 +589,4 @@ def show_workspace_manage(scr, config):
     return config
 
 
-__all__ = [
-    'show_standup', 'show_weekly', 'show_heatmap',
-    'show_search', 'show_workspace_manage'
-]
+__all__ = ["show_standup", "show_weekly", "show_heatmap", "show_search", "show_workspace_manage"]
