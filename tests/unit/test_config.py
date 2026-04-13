@@ -1,11 +1,16 @@
 """Unit tests for devlog.core.config module."""
 
+from datetime import datetime
+
 import pytest
 from devlog.core.config import (
+    DEFAULT_WORKDAYS,
     DEFAULT_WORKSPACES,
-    load_config,
-    save_config,
     active_ws_name,
+    get_workdays,
+    load_config,
+    previous_workday,
+    save_config,
 )
 
 
@@ -175,3 +180,56 @@ class TestActiveWsName:
         name = active_ws_name(config)
         # Should not match "Work" (uppercase), fallback to first
         assert name == "Work"
+
+
+class TestGetWorkdays:
+    """Tests for get_workdays() function."""
+
+    def test_returns_default_when_not_set(self):
+        assert get_workdays({}) == DEFAULT_WORKDAYS
+
+    def test_returns_config_value(self):
+        config = {"workdays": [0, 1, 2]}
+        assert get_workdays(config) == [0, 1, 2]
+
+    def test_returns_empty_list(self):
+        config = {"workdays": []}
+        assert get_workdays(config) == []
+
+
+class TestPreviousWorkday:
+    """Tests for previous_workday() function."""
+
+    def test_friday_to_thursday_weekdays_only(self):
+        """Friday should go back to Thursday with Mon-Fri workdays."""
+        # 2026-04-10 is a Friday
+        fri = datetime(2026, 4, 10)
+        result = previous_workday(fri, [0, 1, 2, 3, 4])
+        assert result.weekday() == 3  # Thursday
+
+    def test_monday_skips_weekend(self):
+        """Monday should go back to Friday when weekends are off."""
+        # 2026-04-13 is a Monday
+        mon = datetime(2026, 4, 13)
+        result = previous_workday(mon, [0, 1, 2, 3, 4])
+        assert result.weekday() == 4  # Friday
+        assert result.day == 10
+
+    def test_all_days_active(self):
+        """With all days active, previous workday is just yesterday."""
+        mon = datetime(2026, 4, 13)
+        result = previous_workday(mon, [0, 1, 2, 3, 4, 5, 6])
+        assert result.day == 12  # Sunday
+
+    def test_empty_workdays_falls_back_to_yesterday(self):
+        """Empty workdays list should fall back to yesterday."""
+        mon = datetime(2026, 4, 13)
+        result = previous_workday(mon, [])
+        assert result.day == 12
+
+    def test_only_mondays_active(self):
+        """With only Monday active, Tuesday goes back to Monday."""
+        tue = datetime(2026, 4, 14)  # Tuesday
+        result = previous_workday(tue, [0])  # Only Monday
+        assert result.weekday() == 0  # Monday
+        assert result.day == 13

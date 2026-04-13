@@ -7,7 +7,13 @@ import shutil
 import subprocess
 from datetime import datetime, timedelta
 
-from .core.config import DEFAULT_WORKSPACES, save_config
+from .core.config import (
+    DEFAULT_WORKDAYS,
+    DEFAULT_WORKSPACES,
+    get_workdays,
+    previous_workday,
+    save_config,
+)
 from .core.persistence import TASKS_DIR, get_tasks, load_all_ws_tasks, load_month
 from .ui.colors import (
     C_CURSOR_BG,
@@ -63,13 +69,14 @@ def copy_to_clipboard(text):
 # ── Standup view ─────────────────────────────────────────────────────────────
 
 
-def show_standup(scr, ws_name):
-    """Show standup view with yesterday's completed and today's todos + done."""
+def show_standup(scr, ws_name, config=None):
+    """Show standup view with previous workday's completed and today's todos + done."""
     h, w = scr.getmaxyx()
     today = datetime.now()
-    yesterday = today - timedelta(days=1)
+    workdays = get_workdays(config) if config else DEFAULT_WORKDAYS
+    prev_day = previous_workday(today, workdays)
 
-    y_done = [t for t in get_tasks(ws_name, yesterday) if t.get("done")]
+    y_done = [t for t in get_tasks(ws_name, prev_day) if t.get("done")]
     today_tasks = get_tasks(ws_name, today)
     t_todo = [t for t in today_tasks if not t.get("done")]
     t_done = [t for t in today_tasks if t.get("done")]
@@ -83,7 +90,11 @@ def show_standup(scr, ws_name):
         saddstr(scr, 3, 0, "─" * (w - 1), curses.color_pair(C_DIM))
 
         y = 5
-        saddstr(scr, y, 3, f"Yesterday — completed ({len(y_done)})", curses.color_pair(C_DIM))
+        if (today - prev_day).days == 1:
+            prev_label = "Yesterday"
+        else:
+            prev_label = prev_day.strftime("%A, %b %-d")
+        saddstr(scr, y, 3, f"{prev_label} — completed ({len(y_done)})", curses.color_pair(C_DIM))
         y += 2
         for t in y_done:
             if y >= h - 4:
@@ -134,7 +145,7 @@ def show_standup(scr, ws_name):
         elif ch == ord("c"):
             # Format standup text for Slack
             lines = []
-            lines.append("*Yesterday*")
+            lines.append(f"*{prev_label}*")
             for t in y_done:
                 lines.append(f"✓ {t['text']}")
             if not y_done:
@@ -589,4 +600,72 @@ def show_workspace_manage(scr, config):
     return config
 
 
-__all__ = ["show_standup", "show_weekly", "show_heatmap", "show_search", "show_workspace_manage"]
+# ── Workdays settings ────────────────────────────────────────────────────────
+
+DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+
+def show_workdays(scr, config):
+    """Workdays settings modal. Toggle which days count as workdays."""
+    h, w = scr.getmaxyx()
+    workdays = list(config.get("workdays", DEFAULT_WORKDAYS))
+    cursor_idx = 0
+
+    while True:
+        scr.clear()
+        title = "Active Workdays"
+        saddstr(scr, 1, max(0, (w - len(title)) // 2), title, curses.color_pair(C_CYAN) | curses.A_BOLD)
+        saddstr(scr, 3, 0, "─" * (w - 1), curses.color_pair(C_DIM))
+
+        y = 5
+        saddstr(scr, y, 3, "Toggle days to include in standup lookback:", curses.color_pair(C_DIM))
+        y += 2
+
+        for i, name in enumerate(DAY_NAMES):
+            if y >= h - 4:
+                break
+            is_cursor = i == cursor_idx
+            active = i in workdays
+            marker = "✓" if active else " "
+            label = f" [{marker}]  {name}"
+
+            if is_cursor:
+                fill_line(scr, y, curses.color_pair(C_CURSOR_BG))
+                saddstr(scr, y, 4, label, curses.color_pair(C_CURSOR_BG))
+            else:
+                color = C_GREEN if active else C_DIM
+                saddstr(scr, y, 4, label, curses.color_pair(color))
+            y += 1
+
+        draw_footer(scr, h, w, "workdays")
+        scr.refresh()
+
+        ch = scr.getch()
+        if ch in (27, ord("q"), ord("Q")):
+            break
+        elif ch in (curses.KEY_DOWN, ord("j")):
+            if cursor_idx < 6:
+                cursor_idx += 1
+        elif ch in (curses.KEY_UP, ord("k")):
+            if cursor_idx > 0:
+                cursor_idx -= 1
+        elif ch in (ord(" "), 10, 13, curses.KEY_ENTER):
+            if cursor_idx in workdays:
+                workdays.remove(cursor_idx)
+            else:
+                workdays.append(cursor_idx)
+                workdays.sort()
+            config["workdays"] = workdays
+            save_config(config)
+
+    return config
+
+
+__all__ = [
+    "show_standup",
+    "show_weekly",
+    "show_heatmap",
+    "show_search",
+    "show_workspace_manage",
+    "show_workdays",
+]

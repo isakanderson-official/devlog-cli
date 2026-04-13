@@ -276,7 +276,7 @@ def main(scr):
 
         # ── Standup ──
         elif key == "s":
-            views.show_standup(scr, ws_name)
+            views.show_standup(scr, ws_name, config)
 
         # ── Weekly ──
         elif key == "w":
@@ -294,6 +294,10 @@ def main(scr):
                 parts = dk.split("-")
                 current_date = datetime(int(parts[0]), int(parts[1]), int(parts[2]))
                 cursor = task_id
+
+        # ── Workdays settings ──
+        elif key == "D":
+            config = views.show_workdays(scr, config)
 
         # ── Workspace management ──
         elif key == "W":

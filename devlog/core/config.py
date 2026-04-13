@@ -1,8 +1,12 @@
 """Configuration management."""
 
+from datetime import datetime, timedelta
+
 from .persistence import CONFIG_FILE, SCHEMA_VERSION, _atomic_write, _read_json
 
 DEFAULT_WORKSPACES = ["Personal"]
+# Monday=0 through Sunday=6 (matches datetime.weekday())
+DEFAULT_WORKDAYS = [0, 1, 2, 3, 4]
 
 
 def load_config() -> dict:
@@ -32,4 +36,30 @@ def active_ws_name(config) -> str:
     return str(wsl[0]) if wsl else "Personal"
 
 
-__all__ = ["DEFAULT_WORKSPACES", "load_config", "save_config", "active_ws_name"]
+def get_workdays(config) -> list:
+    """Get active workdays from config (list of weekday ints, 0=Mon..6=Sun)."""
+    return config.get("workdays", list(DEFAULT_WORKDAYS))
+
+
+def previous_workday(dt, workdays) -> datetime:
+    """Find the most recent workday before dt. Falls back to yesterday if no workdays set."""
+    if not workdays:
+        return dt - timedelta(days=1)
+    d = dt - timedelta(days=1)
+    for _ in range(7):
+        if d.weekday() in workdays:
+            return d
+        d -= timedelta(days=1)
+    # All days checked, just return yesterday
+    return dt - timedelta(days=1)
+
+
+__all__ = [
+    "DEFAULT_WORKDAYS",
+    "DEFAULT_WORKSPACES",
+    "load_config",
+    "save_config",
+    "active_ws_name",
+    "get_workdays",
+    "previous_workday",
+]
