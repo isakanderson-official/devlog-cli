@@ -7,7 +7,13 @@ import shutil
 import subprocess
 from datetime import datetime, timedelta
 
-from .core.config import DEFAULT_WORKDAYS, DEFAULT_WORKSPACES, get_workdays, previous_workday, save_config
+from .core.config import (
+    DEFAULT_WORKDAYS,
+    DEFAULT_WORKSPACES,
+    get_workdays,
+    previous_workday,
+    save_config,
+)
 from .core.persistence import TASKS_DIR, get_tasks, load_all_ws_tasks, load_month
 from .ui.colors import (
     C_CURSOR_BG,
