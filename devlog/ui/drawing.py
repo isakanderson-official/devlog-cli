@@ -178,8 +178,10 @@ def draw_footer(scr, h, w, mode="normal"):
             ("S-←→", "move task"),
             ("/", "search"),
             ("m", "heatmap"),
+            ("s", "standup"),
             ("1-9", "ws"),
             ("W", "ws mgmt"),
+            ("D", "workdays"),
             ("q", "quit"),
         ]
     elif mode == "standup":
@@ -199,6 +201,8 @@ def draw_footer(scr, h, w, mode="normal"):
             ("d", "delete"),
             ("Esc", "back"),
         ]
+    elif mode == "workdays":
+        hints = [("j/k", "nav"), ("Space", "toggle"), ("Esc", "back")]
     else:
         hints = [("Esc", "cancel")]
 
